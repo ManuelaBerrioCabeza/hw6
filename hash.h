@@ -33,7 +33,7 @@ struct MyStringHash {
             unsigned long long pow= 1;
             unsigned long long val =0;
             for (int j =0; i>=0 && j<6; ++j, --i){
-                val+= letterDigitToNumber(lower_key[i]*pow);
+                val+= letterDigitToNumber(lower_key[i])*pow;
                 pow*=36;
             }
             w[4-group] = val;

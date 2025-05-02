@@ -98,7 +98,13 @@ public:
         Prober<KeyType>::init(start, m, key);
         HASH_INDEX_T modulus = findModulusToUseFromTableSize(m);
         // Compute probe stepsize given modulus and h2(k) 
-        dhstep_ = modulus - h2_(key) % modulus;
+        HASH_INDEX_T h2val = h2_(key) % modulus;
+        if(h2val ==0){
+          dhstep_=1;
+         }
+         else{
+          dhstep_ = h2val;
+         }
     }
 
     // To be completed
@@ -276,6 +282,7 @@ private:
     HASH_INDEX_T mIndex_;  // index to CAPACITIES
 
     // ADD MORE DATA MEMBERS HERE, AS NECESSARY
+    double resizeAlpha_;
 
 };
 
@@ -296,7 +303,7 @@ const HASH_INDEX_T HashTable<K,V,Prober,Hash,KEqual>::CAPACITIES[] =
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 HashTable<K,V,Prober,Hash,KEqual>::HashTable(
     double resizeAlpha, const Prober& prober, const Hasher& hash, const KEqual& kequal)
-       :  hash_(hash), kequal_(kequal), prober_(prober), totalProbes_(0), mIndex_(0)
+       :  hash_(hash), kequal_(kequal), prober_(prober), totalProbes_(0), mIndex_(0), resizeAlpha_(resizeAlpha)
 {
     table_.resize(CAPACITIES[mIndex_], nullptr);
 
@@ -342,7 +349,7 @@ size_t HashTable<K,V,Prober,Hash,KEqual>::size() const
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
 {
-    if ((double)(size())/CAPACITIES[mIndex_]>=0.4){
+    if ((double)(size())/CAPACITIES[mIndex_]>=resizeAlpha_){
         resize();
     }
     HASH_INDEX_T h = this->probe(p.first);
@@ -459,10 +466,14 @@ void HashTable<K,V,Prober,Hash,KEqual>::resize()
     table_.clear();
     table_.resize(CAPACITIES[mIndex_],nullptr);
     for (size_t i=0; i<oldTable.size();++i){
-      if(!oldTable[i]->deleted && oldTable[i]!=nullptr){
-        insert(oldTable[i]->item);
+      if(oldTable[i]!=nullptr){
+        if(!oldTable[i]->deleted){
+          insert(oldTable[i]->item);
+        }
+        delete oldTable[i];
+        
       }
-      delete oldTable[i];
+      
     }
  
 }
