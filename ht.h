@@ -34,6 +34,7 @@ struct LinearProber : public Prober<KeyType> {
 
     HASH_INDEX_T next() 
     {
+        // i did add the condition
         // Complete the condition below that indicates failure
         // to find the key or an empty slot
         if( this->numProbes_>=this->m_ ) {
