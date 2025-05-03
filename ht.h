@@ -98,22 +98,23 @@ public:
         Prober<KeyType>::init(start, m, key);
         HASH_INDEX_T modulus = findModulusToUseFromTableSize(m);
         // Compute probe stepsize given modulus and h2(k) 
-        HASH_INDEX_T h2val = h2_(key) % modulus;
-        if(h2val ==0){
-          dhstep_=1;
-         }
-         else{
-          dhstep_ = h2val;
-         }
+        HASH_INDEX_T h2val = modulus - h2_(key) % modulus;
+        dhstep_ = h2val;
+        // if(h2val ==0){
+        //   dhstep_=1;
+        //  }
+        //  else{
+        //   dhstep_ = h2val;
+        //  }
     }
 
     // To be completed
     HASH_INDEX_T next() 
     {
-        if (this->numProbes_>=this->m_){
+        if (this->numProbes_==this->m_){
             return this->npos;
         }
-        HASH_INDEX_T loc = (this->start_+this->numProbes_ *dhstep_)%this->m_;
+        HASH_INDEX_T loc = (this->start_+this->numProbes_ *this->dhstep_)%this->m_;
         this->numProbes_++;
         return loc;
 
@@ -350,6 +351,7 @@ template<typename K, typename V, typename Prober, typename Hash, typename KEqual
 void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
 {
     if ((double)(size())/CAPACITIES[mIndex_]>=resizeAlpha_){
+        std::cout << "HI " << size() << std::endl;
         resize();
     }
     HASH_INDEX_T h = this->probe(p.first);
@@ -456,7 +458,7 @@ typename HashTable<K,V,Prober,Hash,KEqual>::HashItem* HashTable<K,V,Prober,Hash,
 // To be completed
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
 void HashTable<K,V,Prober,Hash,KEqual>::resize()
-{
+{   
     if(mIndex_+1>=sizeof(CAPACITIES)/sizeof(CAPACITIES[0])){
         throw std:: logic_error("no more capacities exist");
     }
@@ -468,6 +470,7 @@ void HashTable<K,V,Prober,Hash,KEqual>::resize()
     for (size_t i=0; i<oldTable.size();++i){
       if(oldTable[i]!=nullptr){
         if(!oldTable[i]->deleted){
+          //std::cout << "insert" << std::endl;
           insert(oldTable[i]->item);
         }
         delete oldTable[i];
